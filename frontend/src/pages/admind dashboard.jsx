@@ -300,6 +300,19 @@ export default function AdminDashboard() {
  
   useEffect(() => { loadAuctions(); loadUsers() }, [])
  
+  // Debug: Log state for credit manager
+  useEffect(() => {
+    const isDisabled = !selectedUser || !creditAmount || (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0))
+    console.log("Credit Manager State:", {
+      selectedUser: selectedUser?._id,
+      selectedUserEmail: selectedUser?.email,
+      creditAmount,
+      creditAction,
+      isDisabled,
+      reason: !selectedUser ? "No user selected" : !creditAmount ? "No amount" : (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0)) ? "Deduction exceeds balance" : "ENABLED"
+    })
+  }, [selectedUser, creditAmount, creditAction])
+ 
   const loadAuctions = async () => {
     setLoading(true)
     try {
@@ -348,12 +361,12 @@ export default function AdminDashboard() {
     } catch (err) { alert("Failed to delete") }
     setMenuOpen(null)
   }
-
+ 
   const resolveUnclaimedAuction = async (auctionId, action) => {
     const relistEnd = action === "reauction"
       ? window.prompt("Enter new end date/time (YYYY-MM-DDTHH:mm). Leave empty for +24h:")
       : null
-
+ 
     try {
       await API.post(
         "/admin/auction-decision",
@@ -390,7 +403,7 @@ export default function AdminDashboard() {
       setCreditSuccess(`❌ Cannot deduct ${amount}. User only has ${(selectedUser.credits || 0).toLocaleString()} credits.`)
       return
     }
-
+ 
     setAddingCredits(true)
     setCreditSuccess(null)
     try {
@@ -445,6 +458,9 @@ export default function AdminDashboard() {
     background: "white", outline: "none", boxSizing: "border-box", fontFamily: font,
   }
   const labelStyle = { fontSize: "13px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "6px" }
+ 
+  // Calculate button disabled state
+  const buttonDisabled = !selectedUser || !creditAmount || (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0))
  
   return (
     <div style={{ minHeight: "100vh", background: "#f4f6fb", fontFamily: font }}>
@@ -946,7 +962,7 @@ export default function AdminDashboard() {
                   <Minus size={14} /> Deduct Credits
                 </button>
               </div>
-
+ 
               <label style={{ fontSize: "13px", fontWeight: "600", color: "#374151", display: "block", marginBottom: "8px" }}>
                 {creditAction === "add" ? "Credits to Add" : "Credits to Deduct"}
               </label>
@@ -1010,7 +1026,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               )}
-
+ 
               {selectedUser && creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser.credits || 0) && (
                 <div style={{
                   padding: "10px 14px", borderRadius: "10px", fontSize: "12px", fontWeight: "600",
@@ -1036,25 +1052,20 @@ export default function AdminDashboard() {
               {/* Submit */}
               <button
                 onClick={submitCreditAction}
-                disabled={
-                  addingCredits ||
-                  !selectedUser ||
-                  !creditAmount ||
-                  (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0))
-                }
+                disabled={buttonDisabled}
                 style={{
                   width: "100%", padding: "13px",
-                  background: !selectedUser || !creditAmount || (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0))
+                  background: buttonDisabled
                     ? "#e5e7eb"
                     : creditAction === "add"
                     ? "linear-gradient(135deg, #ea580c, #c2410c)"
                     : "linear-gradient(135deg, #dc2626, #b91c1c)",
-                  color: !selectedUser || !creditAmount || (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0)) ? "#94a3b8" : "white",
+                  color: buttonDisabled ? "#94a3b8" : "white",
                   border: "none", borderRadius: "12px",
                   fontSize: "14px", fontWeight: "700",
-                  cursor: !selectedUser || !creditAmount || (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0)) ? "not-allowed" : "pointer",
+                  cursor: buttonDisabled ? "not-allowed" : "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-                  boxShadow: !selectedUser || !creditAmount || (creditAction === "deduct" && Number(creditAmount || 0) > Number(selectedUser?.credits || 0))
+                  boxShadow: buttonDisabled
                     ? "none"
                     : creditAction === "add"
                     ? "0 4px 12px rgba(234,88,12,0.35)"
