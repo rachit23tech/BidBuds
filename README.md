@@ -284,21 +284,6 @@ Set build command: npm run build
 Set publish directory: build
 Deploy automatically on push to main branch
 
-🔧 Environment Variables
-Backend (.env)
-PORT=5000
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/bidbuzd
-JWT_SECRET=your_secret_key_here
-STRIPE_SECRET_KEY=sk_test_xxxx
-OPENAI_API_KEY=sk-xxxx
-FRONTEND_URL=https://yourdomain.netlify.app
-NODE_ENV=production
-Frontend (.env)
-REACT_APP_API_URL=https://your-backend.onrender.com
-REACT_APP_STRIPE_PUBLIC_KEY=pk_test_xxxx
-🐛 Troubleshooting
-Images not showing
-
 Check that backend serves /uploads folder: app.use('/uploads', express.static('uploads'))
 Verify imageUrl in database uses correct domain (not localhost)
 Create new auctions to test image upload
