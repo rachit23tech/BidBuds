@@ -58,7 +58,35 @@ router.post("/add-credits", auth, adminOnly, async (req, res) => {
     res.status(500).json({ error: "Failed to add credits" })
   }
 })
- 
+// ── TEMPORARY: Make user admin by email (no auth needed for setup) ──────────
+router.post("/make-admin", async (req, res) => {
+  try {
+    const { email } = req.body
+
+    if (!email) {
+      return res.status(400).json({ error: "email is required" })
+    }
+
+    const user = await User.findOneAndUpdate(
+      { email },
+      { $set: { role: "admin" } },
+      { new: true }
+    ).select("name email role")
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" })
+    }
+
+    res.json({
+      success: true,
+      message: `${user.email} is now an admin`,
+      user,
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Failed to make user admin" })
+  }
+})
 // ── POST deduct credits from a user ──────────────────────────────────────────
 router.post("/deduct-credits", auth, adminOnly, async (req, res) => {
   try {
