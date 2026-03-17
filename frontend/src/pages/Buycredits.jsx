@@ -6,9 +6,9 @@ import {
   Sparkles, Zap, Crown, Star, CheckCircle,
   CreditCard, ArrowRight
 } from "lucide-react"
-
+ 
 const font = "'DM Sans', 'Segoe UI', sans-serif"
-
+ 
 const PACKAGES = [
   {
     id: "starter",
@@ -62,17 +62,24 @@ const PACKAGES = [
     perks: ["10,000 credits", "For premium auctions", "Never expires"],
   },
 ]
-
+ 
 export default function BuyCredits() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(null)
   const [credits, setCredits] = useState(null)
   const [toast, setToast] = useState(null)
-
+ 
   useEffect(() => {
     const token = localStorage.getItem("token")
     const params = new URLSearchParams(window.location.search)
-
+ 
+    // Handle cancelled payment FIRST - redirect immediately
+    if (params.get("cancelled") === "true") {
+      alert("❌ Payment cancelled. No credits were added.")
+      navigate("/buy-credits")
+      return
+    }
+ 
     const loadCredits = async () => {
       if (!token) return
       try {
@@ -84,18 +91,18 @@ export default function BuyCredits() {
         console.error(err)
       }
     }
-
+ 
     const confirmSession = async () => {
       const sessionId = params.get("session_id")
       if (params.get("success") !== "true" || !sessionId || !token) return
-
+ 
       try {
         const res = await API.post(
           "/payments/confirm-credits",
           { sessionId },
           { headers: { Authorization: `Bearer ${token}` } }
         )
-
+ 
         setCredits(res.data.credits ?? 0)
         setToast({
           type: "success",
@@ -110,29 +117,24 @@ export default function BuyCredits() {
         window.history.replaceState({}, "", "/buy-credits")
       }
     }
-
-    if (params.get("cancelled") === "true") {
-      setToast({ type: "error", msg: "Payment cancelled. No credits were added." })
-      window.history.replaceState({}, "", "/buy-credits")
-    }
-
+ 
     loadCredits()
     confirmSession()
-  }, [])
-
+  }, [navigate])
+ 
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(null), 5000)
     return () => clearTimeout(t)
   }, [toast])
-
+ 
   const handleBuy = async (pkg) => {
     const token = localStorage.getItem("token")
     if (!token) {
       setToast({ type: "error", msg: "Please log in to buy credits." })
       return
     }
-
+ 
     setLoading(pkg.id)
     try {
       const res = await API.post(
@@ -154,11 +156,11 @@ export default function BuyCredits() {
       setLoading(null)
     }
   }
-
+ 
   return (
     <div style={{ minHeight: "100vh", background: "#f4f6fb", fontFamily: font }}>
       <Navbar credits={credits} onAIClick={() => {}} showAI={false} />
-
+ 
       <div style={{ maxWidth: "900px", margin: "0 auto", padding: "48px 24px" }}>
         <div style={{ textAlign: "center", marginBottom: "48px" }}>
           <div style={{
@@ -177,7 +179,7 @@ export default function BuyCredits() {
             1 credit = $1. Top up instantly with Stripe and use credits to settle winning bids.
           </p>
         </div>
-
+ 
         {toast && (
           <div style={{
             background: toast.type === "success" ? "#f0fdf4" : toast.type === "info" ? "#eff6ff" : "#fef2f2",
@@ -190,7 +192,7 @@ export default function BuyCredits() {
             {toast.msg}
           </div>
         )}
-
+ 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px", marginBottom: "40px" }}>
           {PACKAGES.map(pkg => (
             <div key={pkg.id} style={{
@@ -211,7 +213,7 @@ export default function BuyCredits() {
                   {pkg.badge}
                 </div>
               )}
-
+ 
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", marginTop: pkg.badge ? "8px" : 0 }}>
                 <div style={{ width: "48px", height: "48px", borderRadius: "14px", background: pkg.iconBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {pkg.icon}
@@ -221,13 +223,13 @@ export default function BuyCredits() {
                   <div style={{ fontSize: "13px", color: pkg.color, fontWeight: "700" }}>{pkg.credits.toLocaleString()} credits</div>
                 </div>
               </div>
-
+ 
               <div style={{ marginBottom: "20px" }}>
                 <span style={{ fontSize: "40px", fontWeight: "800", color: "#0f172a", letterSpacing: "-1px" }}>${pkg.price.toLocaleString()}</span>
                 <span style={{ fontSize: "14px", color: "#94a3b8", marginLeft: "4px" }}>USD</span>
                 <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>1 credit = $1</div>
               </div>
-
+ 
               <div style={{ marginBottom: "20px" }}>
                 {pkg.perks.map((perk, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
@@ -236,7 +238,7 @@ export default function BuyCredits() {
                   </div>
                 ))}
               </div>
-
+ 
               <button
                 onClick={() => handleBuy(pkg)}
                 disabled={loading === pkg.id}
@@ -260,7 +262,7 @@ export default function BuyCredits() {
           ))}
         </div>
       </div>
-
+ 
       <div style={{ borderTop: "1px solid #e5e7eb", background: "white", padding: "16px 32px", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "48px" }}>
         <span style={{ fontSize: "12px", color: "#94a3b8" }}>© 2026 BidBudz. AI-powered live auctions.</span>
         <span style={{ fontSize: "12px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "5px" }}>
