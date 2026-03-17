@@ -27,7 +27,7 @@ router.post("/create", auth, upload.single("image"), async (req, res) => {
     }
  
     const imageUrl = req.file
-      ? `http://localhost:5000/uploads/${req.file.filename}`
+      ? `https://ddr-ai-system.onrender.com/uploads/${req.file.filename}`
       : null
  
     console.log("imageUrl:", imageUrl)
